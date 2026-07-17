@@ -6,7 +6,7 @@ First public release, version-locked with the native Zennopay SDKs
 (iOS / Android v0.2.0 — the PaymentSheet release).
 
 - Package metadata now points at the public
-  [zennopay-react-native](https://github.com/Zennopay/zennopay-react-native)
+  [zennopay-react-native](https://github.com/Zennopay/zennopay-react-native-sdk)
   repository; license set to MIT.
 - No API changes from 0.1.0.
 

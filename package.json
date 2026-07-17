@@ -34,7 +34,7 @@
   "homepage": "https://zennopay.in",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Zennopay/zennopay-react-native.git"
+    "url": "https://github.com/Zennopay/zennopay-react-native-sdk.git"
   },
   "license": "MIT",
   "peerDependencies": {
