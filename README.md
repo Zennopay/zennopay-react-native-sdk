@@ -188,7 +188,7 @@ pre-GA: minor versions may contain breaking API changes, called out in the
 
 All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
 [Android](https://github.com/Zennopay/zennopay-android-sdk),
-[Flutter](https://github.com/Zennopay/zennopay-flutter), and React Native —
+[Flutter](https://github.com/Zennopay/zennopay-flutter-sdk), and React Native —
 release in lockstep: the same `vX.Y.Z` tag and GitHub Release is cut in each
 repo per release. These standalone repos are release mirrors (squashed
 release commits, not full development history).
