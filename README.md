@@ -1,6 +1,6 @@
 # @zennopay/react-native
 
-The React Native SDK for [Zennopay](https://zennopay.com) — let your app's
+The React Native SDK for [Zennopay](https://zennopay.in) — let your app's
 users scan local merchant QR codes abroad and pay from their wallet balance.
 
 This package is a **thin native bridge** over the native Zennopay

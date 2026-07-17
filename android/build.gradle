@@ -36,9 +36,8 @@ android {
 
 repositories {
   google()
+  // The native Zennopay Android SDK (in.zennopay:sdk) is on Maven Central.
   mavenCentral()
-  // The native Zennopay Android SDK (com.zennopay:sdk) is published here.
-  maven { url "https://maven.zennopay.com" }
 }
 
 dependencies {
@@ -47,5 +46,5 @@ dependencies {
 
   // The native Zennopay Android SDK that renders the PaymentSheet and
   // exposes `Zennopay.presentCheckout(...)`.
-  implementation "com.zennopay:sdk:0.2.0"
+  implementation "in.zennopay:sdk:0.2.1"
 }

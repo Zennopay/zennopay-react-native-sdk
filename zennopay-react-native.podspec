@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.summary      = package["description"]
   s.homepage     = package["homepage"]
   s.license      = { :type => "MIT", :file => "LICENSE" }
-  s.authors      = { "Zennopay" => "sdk@zennopay.com" }
+  s.authors      = { "Zennopay" => "sdk@zennopay.in" }
   s.platforms    = { :ios => "15.0" }
   s.source       = { :git => "https://github.com/Zennopay/zennopay-react-native.git", :tag => "#{s.version}" }
 

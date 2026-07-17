@@ -1,0 +1,33 @@
+name: Publish to npm
+
+# Publishes @zennopay/react-native to npm on a version tag.
+#
+# GATE: the RN package is a bridge to the native iOS + Android SDKs. It only
+# functions once those native artifacts are consumable (Android via
+# in.zennopay:sdk on Maven Central; iOS via the Zennopay CocoaPod). Until then
+# this workflow is a no-op — it skips unless PUBLISH_NPM is set to "true" as a
+# repo variable, so tagging the repo for other reasons never ships a package
+# partners can't build.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: vars.PUBLISH_NPM == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm ci || npm install
+      - run: npm run prepare
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
