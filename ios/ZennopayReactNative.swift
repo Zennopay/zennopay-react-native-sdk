@@ -20,10 +20,14 @@ final class ZennopayReactNative: RCTEventEmitter {
   private var hasListeners = false
   /// Pending `refreshSession` continuations keyed by intent id.
   private var pendingRefresh: [String: (String?) -> Void] = [:]
+  /// Pending `refreshReceiptToken` continuations keyed by intent id.
+  private var pendingReceiptRefresh: [String: (String?) -> Void] = [:]
 
   override static func requiresMainQueueSetup() -> Bool { true }
 
-  override func supportedEvents() -> [String]! { ["ZennopaySessionExpired"] }
+  override func supportedEvents() -> [String]! {
+    ["ZennopaySessionExpired", "ZennopayReceiptTokenExpired"]
+  }
 
   override func startObserving() { hasListeners = true }
   override func stopObserving() { hasListeners = false }
@@ -76,6 +80,55 @@ final class ZennopayReactNative: RCTEventEmitter {
     }
   }
 
+  // MARK: - presentReceipt
+
+  @objc(presentReceipt:receiptToken:configJson:appearanceJson:resolver:rejecter:)
+  func presentReceipt(
+    _ intentId: String,
+    receiptToken: String,
+    configJson: String,
+    appearanceJson: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.main.async {
+      guard let presenter = RCTPresentedViewController() else {
+        reject("no_presentation_context",
+               "No view controller available to present the Zennopay receipt.",
+               nil)
+        return
+      }
+
+      // Decode the serialized config + appearance passed from JS.
+      let config = ZennopayBridgeCodec.config(from: configJson)
+      let appearance = ZennopayBridgeCodec.appearance(from: appearanceJson)
+
+      // Wire the native SDK entrypoint. Uncomment once the native SDK is linked.
+      /*
+      Zennopay.presentReceipt(
+        from: presenter,
+        intentID: intentId,
+        receiptToken: receiptToken,
+        refreshReceiptToken: { [weak self] intent in
+          await self?.requestRefreshedReceiptToken(for: intent)
+        },
+        config: config,
+        appearance: appearance
+      ) {
+        // Read-only surface: resolve once the user dismisses the receipt.
+        resolve("")
+      }
+      */
+
+      // Bridge stub: fail fast until the native SDK is linked, so integration
+      // wiring is testable end-to-end without a silent no-op.
+      _ = (presenter, config, appearance, receiptToken)
+      reject("native_sdk_unavailable",
+             "The native Zennopay iOS SDK is not linked yet.",
+             nil)
+    }
+  }
+
   // MARK: - refreshSession round-trip
 
   /// Fired by the native SDK on 401/expiry: ask JS for a fresh JWT.
@@ -95,6 +148,31 @@ final class ZennopayReactNative: RCTEventEmitter {
     DispatchQueue.main.async {
       let resume = self.pendingRefresh.removeValue(forKey: intentId)
       resume?(jwt)
+    }
+  }
+
+  // MARK: - refreshReceiptToken round-trip
+
+  /// Fired by the native SDK on a 401 mid-poll on the receipt: ask JS for a
+  /// fresh receipt token.
+  private func requestRefreshedReceiptToken(for intentId: String) async -> String? {
+    guard hasListeners else { return nil }
+    return await withCheckedContinuation { continuation in
+      DispatchQueue.main.async {
+        self.pendingReceiptRefresh[intentId] = { token in
+          continuation.resume(returning: token)
+        }
+        self.sendEvent(withName: "ZennopayReceiptTokenExpired", body: ["intentId": intentId])
+      }
+    }
+  }
+
+  /// JS reply carrying the freshly minted receipt token (or null).
+  @objc(provideRefreshedReceiptToken:token:)
+  func provideRefreshedReceiptToken(_ intentId: String, token: String?) {
+    DispatchQueue.main.async {
+      let resume = self.pendingReceiptRefresh.removeValue(forKey: intentId)
+      resume?(token)
     }
   }
 }

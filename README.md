@@ -27,9 +27,8 @@ Full documentation: [Zennopay/zennopay-docs](https://github.com/Zennopay/zennopa
 npm install @zennopay/react-native
 ```
 
-> **Note:** npm publication follows once the native SDKs are published to
-> their package registries. Until then, install from git:
-> `npm install github:Zennopay/zennopay-react-native-sdk#v0.2.0`.
+> **Note:** if npm hasn't propagated the release yet, install from git:
+> `npm install github:Zennopay/zennopay-react-native-sdk#v0.3.0`.
 
 ### Link the native SDKs
 
@@ -131,6 +130,43 @@ const result = await presentSheet({
 });
 ```
 
+### Reopening a receipt
+
+`presentReceipt(...)` presents the **authoritative** native receipt for a
+payment intent — the same receipt / pending / failure screens the sheet shows
+at the end of a payment — so users can reopen "view receipt" from your history.
+The native SDK fetches the receipt, polls a pending receipt through to a
+terminal state, shows refund copy when the intent was refunded, and re-mints
+the receipt token via `refreshReceiptToken` on a `401` mid-poll. It is
+read-only, so the promise resolves with no value once the user dismisses it
+(and is available on the `useZennopay()` hook too).
+
+```tsx
+import { useZennopay } from '@zennopay/react-native';
+
+function ViewReceiptButton({ intentId }: { intentId: string }) {
+  const { presentReceipt } = useZennopay();
+
+  const onViewReceipt = async () => {
+    const { receiptToken } = await walletApi.mintReceiptToken(intentId);
+
+    await presentReceipt({
+      intentId,
+      receiptToken,
+      refreshReceiptToken: async (id) => {
+        // Called on receipt-token expiry (401 mid-poll): re-mint for the
+        // SAME intent, or return null if you can't.
+        const refreshed = await walletApi.mintReceiptToken(id);
+        return refreshed.receiptToken ?? null;
+      },
+    });
+    // Resolves when the user dismisses the receipt — no PaymentResult to handle.
+  };
+
+  return <Button title="View receipt" onPress={onViewReceipt} />;
+}
+```
+
 The promise **rejects** only for integration errors (`no_presentation_context`,
 `native_sdk_unavailable`). A payment failure resolves normally with
 `{ status: 'failed', error }`, where `error.code` is a stable string from the
@@ -166,9 +202,13 @@ Omit `appearance` for the default Zennopay look with system light/dark.
 - `presentSheet` calls the native module's `present(...)`, which wraps
   `Zennopay.presentCheckout` on each platform and resolves exactly once with
   the terminal result.
-- `refreshSession` is serviced over an event + reply: the native side emits
-  `ZennopaySessionExpired { intentId }`, the bridge runs your async callback,
-  and replies with the fresh JWT — the bridge never blocks.
+- `presentReceipt` calls the native module's `presentReceipt(...)`, which wraps
+  `Zennopay.presentReceipt` on each platform and resolves once the read-only
+  receipt is dismissed.
+- `refreshSession` / `refreshReceiptToken` are serviced over an event + reply:
+  the native side emits `ZennopaySessionExpired` / `ZennopayReceiptTokenExpired`
+  `{ intentId }`, the bridge runs your async callback, and replies with the
+  fresh token — the bridge never blocks.
 - The session JWT crosses the bridge once, into native memory; it is never
   placed in a URL. Confirm idempotency, retries, and relaunch recovery are
   owned by the native SDKs.
@@ -184,7 +224,8 @@ the JS package is installed but the native SDK isn't.
 
 Zennopay SDKs follow [semver](https://semver.org). `v0.x` releases are
 pre-GA: minor versions may contain breaking API changes, called out in the
-[CHANGELOG](CHANGELOG.md).
+[CHANGELOG](CHANGELOG.md). **0.3.0** adds `presentReceipt` (no breaking
+changes).
 
 All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
 [Android](https://github.com/Zennopay/zennopay-android-sdk),

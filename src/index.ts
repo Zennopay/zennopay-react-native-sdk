@@ -7,7 +7,11 @@ import {
 } from 'react-native';
 
 import type { Spec } from './NativeZennopay';
-import type { PaymentResult, PresentSheetOptions } from './types';
+import type {
+  PaymentResult,
+  PresentReceiptOptions,
+  PresentSheetOptions,
+} from './types';
 
 export * from './types';
 export { ZennopayProvider, useZennopay } from './ZennopayProvider';
@@ -36,6 +40,7 @@ const ZennopayModule: Spec =
   ) as Spec);
 
 const SESSION_EXPIRED_EVENT = 'ZennopaySessionExpired';
+const RECEIPT_TOKEN_EXPIRED_EVENT = 'ZennopayReceiptTokenExpired';
 
 /**
  * Present the native Zennopay PaymentSheet and resolve once with a terminal
@@ -82,4 +87,53 @@ export async function presentSheet(
   }
 }
 
-export default { presentSheet };
+/**
+ * Present the authoritative native Zennopay receipt for a payment intent and
+ * resolve once the user dismisses it.
+ *
+ * A thin mirror of {@link presentSheet}: the native SDK fetches the receipt,
+ * renders the native receipt / pending / failure screens, polls a pending
+ * receipt through to a terminal state, shows refund copy when the intent was
+ * refunded, and — on a `401` mid-poll — asks the host to re-mint the receipt
+ * token via `refreshReceiptToken`. The receipt is read-only, so the promise
+ * resolves with no value; it rejects only for integration errors (e.g. no
+ * presentation context).
+ */
+export async function presentReceipt(
+  options: PresentReceiptOptions
+): Promise<void> {
+  const { intentId, receiptToken, refreshReceiptToken, appearance, config } =
+    options;
+
+  let subscription: EmitterSubscription | undefined;
+  if (refreshReceiptToken) {
+    const emitter = new NativeEventEmitter(NativeModules.ZennopayReactNative);
+    subscription = emitter.addListener(
+      RECEIPT_TOKEN_EXPIRED_EVENT,
+      async (event: { intentId: string }) => {
+        try {
+          const token = await refreshReceiptToken(event.intentId);
+          ZennopayModule.provideRefreshedReceiptToken(
+            event.intentId,
+            token ?? null
+          );
+        } catch {
+          ZennopayModule.provideRefreshedReceiptToken(event.intentId, null);
+        }
+      }
+    );
+  }
+
+  try {
+    await ZennopayModule.presentReceipt(
+      intentId,
+      receiptToken,
+      JSON.stringify(config ?? { environment: 'staging' }),
+      JSON.stringify(appearance ?? { mode: 'automatic' })
+    );
+  } finally {
+    subscription?.remove();
+  }
+}
+
+export default { presentSheet, presentReceipt };

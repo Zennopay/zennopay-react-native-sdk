@@ -44,7 +44,7 @@ dependencies {
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 
-  // The native Zennopay Android SDK that renders the PaymentSheet and
-  // exposes `Zennopay.presentCheckout(...)`.
-  implementation "in.zennopay:sdk:0.2.1"
+  // The native Zennopay Android SDK that renders the PaymentSheet + receipt and
+  // exposes `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
+  implementation "in.zennopay:sdk:0.3.0"
 }

@@ -139,3 +139,18 @@ export interface PresentSheetOptions {
   appearance?: ZennopayAppearance;
   config?: ZennopayConfig;
 }
+
+export interface PresentReceiptOptions {
+  /** The Zennopay payment intent id to show the receipt for (e.g. `zp_...`). */
+  intentId: string;
+  /** The partner-minted, intent-bound receipt token. */
+  receiptToken: string;
+  /**
+   * Host hook invoked on a 401/expiry while polling a pending receipt. Re-mints
+   * a fresh receipt token for the SAME intent, or resolves `null` if it can't.
+   * Serviced over a native event + reply so the bridge never blocks.
+   */
+  refreshReceiptToken?: (intentId: string) => Promise<string | null>;
+  appearance?: ZennopayAppearance;
+  config?: ZennopayConfig;
+}

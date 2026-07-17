@@ -14,8 +14,18 @@ RCT_EXTERN_METHOD(present:(NSString *)intentId
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(presentReceipt:(NSString *)intentId
+                  receiptToken:(NSString *)receiptToken
+                  configJson:(NSString *)configJson
+                  appearanceJson:(NSString *)appearanceJson
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(provideRefreshedSession:(NSString *)intentId
                   jwt:(NSString *)jwt)
+
+RCT_EXTERN_METHOD(provideRefreshedReceiptToken:(NSString *)intentId
+                  token:(NSString *)token)
 
 + (BOOL)requiresMainQueueSetup
 {

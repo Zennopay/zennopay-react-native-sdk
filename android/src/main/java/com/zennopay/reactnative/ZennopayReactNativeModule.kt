@@ -30,6 +30,9 @@ class ZennopayReactNativeModule(
   /** Pending refreshSession round-trips keyed by intent id. */
   private val pendingRefresh = ConcurrentHashMap<String, CompletableDeferred<String?>>()
 
+  /** Pending refreshReceiptToken round-trips keyed by intent id. */
+  private val pendingReceiptRefresh = ConcurrentHashMap<String, CompletableDeferred<String?>>()
+
   override fun getName(): String = NAME
 
   @ReactMethod
@@ -75,6 +78,50 @@ class ZennopayReactNativeModule(
     )
   }
 
+  @ReactMethod
+  fun presentReceipt(
+    intentId: String,
+    receiptToken: String,
+    configJson: String,
+    appearanceJson: String,
+    promise: Promise,
+  ) {
+    val activity = currentActivity
+    if (activity == null) {
+      promise.reject(
+        "no_presentation_context",
+        "No current Activity to present the Zennopay receipt.",
+      )
+      return
+    }
+
+    // Decode the serialized config + appearance passed from JS.
+    // val config = ZennopayBridgeCodec.config(configJson)
+    // val appearance = ZennopayBridgeCodec.appearance(appearanceJson)
+
+    // Wire the native SDK entrypoint. Uncomment once the native SDK is linked.
+    /*
+    Zennopay.presentReceipt(
+      activity = activity as ComponentActivity,
+      intentId = intentId,
+      receiptToken = receiptToken,
+      refreshReceiptToken = { intent -> requestRefreshedReceiptToken(intent) },
+      config = config,
+      appearance = appearance,
+    ) {
+      // Read-only surface: resolve once the user dismisses the receipt.
+      promise.resolve("")
+    }
+    */
+
+    // Bridge stub: fail fast until the native SDK is linked so integration
+    // wiring is testable end-to-end without a silent no-op.
+    promise.reject(
+      "native_sdk_unavailable",
+      "The native Zennopay Android SDK is not linked yet.",
+    )
+  }
+
   /** Fired by the native SDK on 401/expiry: ask JS for a fresh JWT. */
   private suspend fun requestRefreshedSession(intentId: String): String? {
     val deferred = CompletableDeferred<String?>()
@@ -91,6 +138,25 @@ class ZennopayReactNativeModule(
   @ReactMethod
   fun provideRefreshedSession(intentId: String, jwt: String?) {
     pendingRefresh.remove(intentId)?.complete(jwt)
+  }
+
+  /** Fired by the native SDK on a 401 mid-poll on the receipt: ask JS for a
+   * fresh receipt token. */
+  private suspend fun requestRefreshedReceiptToken(intentId: String): String? {
+    val deferred = CompletableDeferred<String?>()
+    pendingReceiptRefresh[intentId] = deferred
+    reactContext
+      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+      .emit("ZennopayReceiptTokenExpired", com.facebook.react.bridge.Arguments.createMap().apply {
+        putString("intentId", intentId)
+      })
+    return deferred.await()
+  }
+
+  /** JS reply carrying the freshly minted receipt token (or null). */
+  @ReactMethod
+  fun provideRefreshedReceiptToken(intentId: String, token: String?) {
+    pendingReceiptRefresh.remove(intentId)?.complete(token)
   }
 
   // Required for RN NativeEventEmitter (no-op; events fire via the emitter).

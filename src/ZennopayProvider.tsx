@@ -1,8 +1,12 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 
-import { presentSheet as presentSheetImpl } from './index';
+import {
+  presentReceipt as presentReceiptImpl,
+  presentSheet as presentSheetImpl,
+} from './index';
 import type {
   PaymentResult,
+  PresentReceiptOptions,
   PresentSheetOptions,
   ZennopayConfig,
 } from './types';
@@ -43,11 +47,12 @@ export function ZennopayProvider(props: ZennopayProviderProps): JSX.Element {
 
 export interface UseZennopay {
   presentSheet: (options: PresentSheetOptions) => Promise<PaymentResult>;
+  presentReceipt: (options: PresentReceiptOptions) => Promise<void>;
 }
 
 /**
- * Hook returning `presentSheet`, pre-bound to the provider's default config
- * (per-call `config` still overrides).
+ * Hook returning `presentSheet` + `presentReceipt`, pre-bound to the provider's
+ * default config (per-call `config` still overrides).
  */
 export function useZennopay(): UseZennopay {
   const ctx = useContext(ZennopayContext);
@@ -61,5 +66,14 @@ export function useZennopay(): UseZennopay {
     [ctx]
   );
 
-  return { presentSheet };
+  const presentReceipt = useCallback(
+    (options: PresentReceiptOptions) =>
+      presentReceiptImpl({
+        ...options,
+        config: options.config ?? ctx?.config,
+      }),
+    [ctx]
+  );
+
+  return { presentSheet, presentReceipt };
 }
