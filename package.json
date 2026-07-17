@@ -1,6 +1,6 @@
 {
   "name": "@zennopay/react-native",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Zennopay PaymentSheet for React Native — a thin native bridge over the native Zennopay iOS/Android checkout sheets (scan → amount → confirm → status). One call in, one PaymentResult out.",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
