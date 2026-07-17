@@ -1,0 +1,20 @@
+# Node
+node_modules/
+lib/
+
+# Native build output
+android/build/
+ios/build/
+*.xcworkspace
+Pods/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+
+# Lockfile excluded (library package)
+package-lock.json

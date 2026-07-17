@@ -1,0 +1,198 @@
+# @zennopay/react-native
+
+The React Native SDK for [Zennopay](https://zennopay.com) — let your app's
+users scan local merchant QR codes abroad and pay from their wallet balance.
+
+This package is a **thin native bridge** over the native Zennopay
+[iOS](https://github.com/Zennopay/zennopay-ios-sdk) and
+[Android](https://github.com/Zennopay/zennopay-android-sdk) PaymentSheets.
+The camera scanner, slide-to-pay physics, and confirm/status UI all render
+natively — nothing is re-implemented in JS. One `await presentSheet(...)`,
+one `PaymentResult`. Both the legacy bridge and the new architecture
+(Fabric/TurboModules) are supported.
+
+Full documentation: [Zennopay/zennopay-docs](https://github.com/Zennopay/zennopay-docs)
+
+## Requirements
+
+- React Native 0.70+, React 17+
+- The **native Zennopay SDKs must be linked** (see below) — this package is
+  the JS surface, not the implementation
+- A backend session endpoint that creates the payment intent and mints the
+  short-lived session JWT (your API keys never ship in the app)
+
+## Installation
+
+```sh
+npm install @zennopay/react-native
+```
+
+> **Note:** npm publication follows once the native SDKs are published to
+> their package registries. Until then, install from git:
+> `npm install github:Zennopay/zennopay-react-native#v0.2.0`.
+
+### Link the native SDKs
+
+If the native SDK isn't linked, every `presentSheet` call rejects with the
+code `native_sdk_unavailable` — a build/link problem, not a payment failure.
+(Expo Go cannot load the native module; use a development build.)
+
+**iOS** — the podspec depends on the native `Zennopay` pod
+([zennopay-ios-sdk](https://github.com/Zennopay/zennopay-ios-sdk)), so
+installing pods pulls it in:
+
+```sh
+cd ios && pod install
+```
+
+Then add the camera usage string to `ios/YourApp/Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Scan a merchant QR code to pay.</string>
+```
+
+**Android** — the module's Gradle file depends on the native SDK
+(`com.zennopay:sdk`,
+[zennopay-android-sdk](https://github.com/Zennopay/zennopay-android-sdk)).
+Make sure the Zennopay Maven repository is declared in `android/settings.gradle`
+alongside `google()` and `mavenCentral()`. The `CAMERA` permission is merged
+from the native SDK's manifest; the SDK requests it at runtime.
+
+Rebuild the app after installing (`npx react-native run-ios` /
+`run-android`) — a Metro-only reload will not pick up the native module.
+
+## Quickstart
+
+Wrap your app in `ZennopayProvider` (sets the default environment), then call
+`presentSheet` from the `useZennopay()` hook:
+
+```tsx
+import { ZennopayProvider, useZennopay } from '@zennopay/react-native';
+
+// Root:
+export default function App() {
+  return (
+    <ZennopayProvider config={{ environment: 'staging' }}>
+      <Wallet />
+    </ZennopayProvider>
+  );
+}
+
+// In a component:
+function PayButton() {
+  const { presentSheet } = useZennopay();
+
+  const onScanAndPay = async () => {
+    // 1. Ask YOUR backend for a checkout session (intent + session JWT).
+    const session = await walletApi.createCheckoutSession();
+
+    // 2. Present the native PaymentSheet and await the terminal result.
+    const result = await presentSheet({
+      intentId: session.intentId,
+      sessionJwt: session.sessionJwt,
+      refreshSession: async (intentId) => {
+        // Called on session expiry (401): re-mint for the SAME intent,
+        // or return null if you can't.
+        const refreshed = await walletApi.refreshSession(intentId);
+        return refreshed?.sessionJwt ?? null;
+      },
+    });
+
+    // 3. One terminal case.
+    switch (result.status) {
+      case 'completed':
+        showReceipt(result.receipt); // money moved — debit your ledger
+        break;
+      case 'pending':
+        showPending(); // may still settle — reconcile via webhook/history
+        break;
+      case 'canceled':
+        break; // user backed out; no money moved
+      case 'failed':
+        console.warn('payment failed', result.error.code);
+        break;
+    }
+  };
+
+  return <Button title="Scan & Pay" onPress={onScanAndPay} />;
+}
+```
+
+There is also an imperative import if you don't want the provider:
+
+```ts
+import { presentSheet } from '@zennopay/react-native';
+
+const result = await presentSheet({
+  intentId,
+  sessionJwt,
+  config: { environment: 'staging' },
+});
+```
+
+The promise **rejects** only for integration errors (`no_presentation_context`,
+`native_sdk_unavailable`). A payment failure resolves normally with
+`{ status: 'failed', error }`, where `error.code` is a stable string from the
+shared taxonomy (`invalid_jwt`, `intent_mismatch`, `jwt_expired`,
+`quote_expired`, `limit_exceeded`, `network_error`, `timed_out`, …).
+`pending` means status polling timed out — the payment may still settle;
+reconcile via your webhook or transaction history.
+
+### Theming
+
+Theming is a plain JS object, serialized to the native `ZennopayAppearance`:
+
+```ts
+await presentSheet({
+  intentId: session.intentId,
+  sessionJwt: session.sessionJwt,
+  appearance: {
+    mode: 'automatic',
+    colors: {
+      primary: '#1B4FD8',
+      dark: { primary: '#6E8EF5' },          // per-mode overrides
+    },
+    cornerRadius: { card: 10, slide: 12 },   // clamped to <= 12 natively
+    primaryButton: { background: '#1B4FD8', textColor: '#FFFFFF', cornerRadius: 10 },
+  },
+});
+```
+
+Omit `appearance` for the default Zennopay look with system light/dark.
+
+## How the bridge works
+
+- `presentSheet` calls the native module's `present(...)`, which wraps
+  `Zennopay.presentCheckout` on each platform and resolves exactly once with
+  the terminal result.
+- `refreshSession` is serviced over an event + reply: the native side emits
+  `ZennopaySessionExpired { intentId }`, the bridge runs your async callback,
+  and replies with the fresh JWT — the bridge never blocks.
+- The session JWT crosses the bridge once, into native memory; it is never
+  placed in a URL. Confirm idempotency, retries, and relaunch recovery are
+  owned by the native SDKs.
+
+## Testing
+
+On a simulator/emulator there is no usable camera — the native sheet falls
+back to paste-QR; paste any VietQR payload string. If `presentSheet` rejects
+with `native_sdk_unavailable`, re-run `pod install` / a full Gradle build:
+the JS package is installed but the native SDK isn't.
+
+## Versioning
+
+Zennopay SDKs follow [semver](https://semver.org). `v0.x` releases are
+pre-GA: minor versions may contain breaking API changes, called out in the
+[CHANGELOG](CHANGELOG.md).
+
+All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
+[Android](https://github.com/Zennopay/zennopay-android-sdk),
+[Flutter](https://github.com/Zennopay/zennopay-flutter), and React Native —
+release in lockstep: the same `vX.Y.Z` tag and GitHub Release is cut in each
+repo per release. These standalone repos are release mirrors (squashed
+release commits, not full development history).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
