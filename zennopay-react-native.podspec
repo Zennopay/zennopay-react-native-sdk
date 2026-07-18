@@ -9,7 +9,8 @@ Pod::Spec.new do |s|
   s.homepage     = package["homepage"]
   s.license      = { :type => "MIT", :file => "LICENSE" }
   s.authors      = { "Zennopay" => "sdk@zennopay.in" }
-  s.platforms    = { :ios => "15.0" }
+  # The native Zennopay pod requires iOS 16, so the bridge does too.
+  s.platforms    = { :ios => "16.0" }
   s.source       = { :git => "https://github.com/Zennopay/zennopay-react-native-sdk.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"

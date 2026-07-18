@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0
+
+**Native SDKs linked — `presentSheet` + `presentReceipt` now invoke the real
+native PaymentSheet (previously stubbed).** The iOS
+(`ZennopayReactNative.swift`) and Android (`ZennopayReactNativeModule.kt`)
+bridge methods now call `Zennopay.presentCheckout(...)` /
+`Zennopay.presentReceipt(...)` against the published native SDKs — the
+`native_sdk_unavailable` stub reject is gone. The bridge maps the JS
+`config` / `appearance` dicts onto the native `ZennopayConfig` /
+`ZennopayAppearance` and the native `PaymentResult` back onto the JS
+`{ status, intentId, error }` payload, and wires `refreshSession` /
+`refreshReceiptToken` over the existing event round-trip.
+
+- iOS: presents from `RCTPresentedViewController()` on the main actor; links
+  the `Zennopay ~> 0.3.0` CocoaPod. Podspec iOS floor raised to 16.0 (the
+  native pod's deployment target).
+- Android: presents via `currentActivity` (a `ComponentActivity`) on the UI
+  thread; links `in.zennopay:sdk:0.3.0` from Maven Central. Rejects with
+  `no_activity` when there is no current Activity.
+- The JS/TS surface is unchanged.
+
+**Version-aligned with the iOS / Android / Flutter SDKs at 0.5.0.** All four
+Zennopay SDKs now share the same version line; this release jumps the React
+Native package from 0.3.0 to 0.5.0 to match (no breaking API changes).
+
 ## 0.3.0
 
 **New: `presentReceipt(options)` — reopen the authoritative receipt.** A second

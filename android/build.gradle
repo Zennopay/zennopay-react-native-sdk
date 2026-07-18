@@ -47,4 +47,14 @@ dependencies {
   // The native Zennopay Android SDK that renders the PaymentSheet + receipt and
   // exposes `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
   implementation "in.zennopay:sdk:0.3.0"
+
+  // The SDK declares these as `implementation` (runtime-scoped in its POM), but
+  // the bridge references them at COMPILE time — `ComponentActivity` (the
+  // `presentCheckout`/`presentReceipt` receiver) and Compose `Dp`/`.dp` for the
+  // `ZennopayAppearance` mapping — so we depend on them directly.
+  implementation "androidx.activity:activity:1.9.0"
+  implementation platform("androidx.compose:compose-bom:2024.06.00")
+  implementation "androidx.compose.ui:ui-unit"
+  // `ZennopayAppearance.Typography` references `FontFamily` in its default arg.
+  implementation "androidx.compose.ui:ui-text"
 }

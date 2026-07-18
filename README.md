@@ -16,8 +16,10 @@ Full documentation: [Zennopay/zennopay-docs](https://github.com/Zennopay/zennopa
 ## Requirements
 
 - React Native 0.70+, React 17+
-- The **native Zennopay SDKs must be linked** (see below) — this package is
-  the JS surface, not the implementation
+- iOS 16+ (the native `Zennopay` pod's deployment target) / Android
+  `minSdkVersion` 24+
+- The native Zennopay iOS/Android SDKs, pulled in automatically by
+  `pod install` / Gradle (see below) — this package is the JS surface over them
 - A backend session endpoint that creates the payment intent and mints the
   short-lived session JWT (your API keys never ship in the app)
 
@@ -28,13 +30,13 @@ npm install @zennopay/react-native
 ```
 
 > **Note:** if npm hasn't propagated the release yet, install from git:
-> `npm install github:Zennopay/zennopay-react-native-sdk#v0.3.0`.
+> `npm install github:Zennopay/zennopay-react-native-sdk#v0.5.0`.
 
 ### Link the native SDKs
 
-If the native SDK isn't linked, every `presentSheet` call rejects with the
-code `native_sdk_unavailable` — a build/link problem, not a payment failure.
-(Expo Go cannot load the native module; use a development build.)
+The native SDKs are linked automatically — `pod install` pulls in the
+`Zennopay` CocoaPod and Gradle pulls in `in.zennopay:sdk`. (Expo Go cannot
+load the native module; use a development build.)
 
 **iOS** — the podspec depends on the native `Zennopay` pod
 ([zennopay-ios-sdk](https://github.com/Zennopay/zennopay-ios-sdk)), so
@@ -52,11 +54,11 @@ Then add the camera usage string to `ios/YourApp/Info.plist`:
 ```
 
 **Android** — the module's Gradle file depends on the native SDK
-(`com.zennopay:sdk`,
-[zennopay-android-sdk](https://github.com/Zennopay/zennopay-android-sdk)).
-Make sure the Zennopay Maven repository is declared in `android/settings.gradle`
-alongside `google()` and `mavenCentral()`. The `CAMERA` permission is merged
-from the native SDK's manifest; the SDK requests it at runtime.
+(`in.zennopay:sdk`,
+[zennopay-android-sdk](https://github.com/Zennopay/zennopay-android-sdk)),
+published on Maven Central — no extra repository declaration is needed beyond
+`google()` and `mavenCentral()`. The `CAMERA` permission is merged from the
+native SDK's manifest; the SDK requests it at runtime.
 
 Rebuild the app after installing (`npx react-native run-ios` /
 `run-android`) — a Metro-only reload will not pick up the native module.
@@ -167,8 +169,8 @@ function ViewReceiptButton({ intentId }: { intentId: string }) {
 }
 ```
 
-The promise **rejects** only for integration errors (`no_presentation_context`,
-`native_sdk_unavailable`). A payment failure resolves normally with
+The promise **rejects** only for integration errors (`no_presentation_context`
+on iOS / `no_activity` on Android). A payment failure resolves normally with
 `{ status: 'failed', error }`, where `error.code` is a stable string from the
 shared taxonomy (`invalid_jwt`, `intent_mismatch`, `jwt_expired`,
 `quote_expired`, `limit_exceeded`, `network_error`, `timed_out`, …).
@@ -216,16 +218,17 @@ Omit `appearance` for the default Zennopay look with system light/dark.
 ## Testing
 
 On a simulator/emulator there is no usable camera — the native sheet falls
-back to paste-QR; paste any VietQR payload string. If `presentSheet` rejects
-with `native_sdk_unavailable`, re-run `pod install` / a full Gradle build:
-the JS package is installed but the native SDK isn't.
+back to paste-QR; paste any VietQR payload string. If the module fails to
+resolve at runtime, re-run `pod install` / a full Gradle build and rebuild the
+app (a Metro-only reload does not pick up native changes).
 
 ## Versioning
 
 Zennopay SDKs follow [semver](https://semver.org). `v0.x` releases are
 pre-GA: minor versions may contain breaking API changes, called out in the
-[CHANGELOG](CHANGELOG.md). **0.3.0** adds `presentReceipt` (no breaking
-changes).
+[CHANGELOG](CHANGELOG.md). **0.5.0** links the native SDKs so `presentSheet`
+and `presentReceipt` invoke the real native PaymentSheet, and aligns the
+version line with the iOS / Android / Flutter SDKs (no breaking API changes).
 
 All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
 [Android](https://github.com/Zennopay/zennopay-android-sdk),
