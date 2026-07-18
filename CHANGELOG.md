@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.6.0
+
+Partner-facing environment names + production fallback host fix.
+
+### Fixed
+
+- **Production fallback host.** The iOS bridge's config codec fell back to a
+  stale, non-canonical host for `environment: 'production'`. It now resolves to
+  `https://api.zennopay.in` (canonical). The Android bridge's default host is
+  likewise aligned to `https://api.sandbox.zennopay.in`.
+
+### Added
+
+- `environment: 'sandbox'` → `https://api.sandbox.zennopay.in`, the environment
+  partners integrate and test against. Now the default for `presentSheet` /
+  `presentReceipt` / `ZennopayProvider`.
+
+### Changed
+
+- Default `environment` is now `'sandbox'` (was `'staging'`). Same behavior,
+  partner-facing name.
+- Native dependency bumped to `Zennopay ~> 0.6.0` (iOS). The Android native
+  dependency stays at `in.zennopay:sdk:0.5.0` until `0.6.0` propagates to Maven
+  Central; the bridge derives the sandbox host explicitly, so it is used
+  regardless of the native default.
+
+### Deprecated
+
+- `environment: 'staging'` is a deprecated alias for `'sandbox'` — it now points
+  at `https://api.sandbox.zennopay.in` (previously `https://api.staging.zennopay.in`).
+  Existing code keeps working; migrate to `'sandbox'`.
+
 ## 0.5.0
 
 **Native SDKs linked — `presentSheet` + `presentReceipt` now invoke the real

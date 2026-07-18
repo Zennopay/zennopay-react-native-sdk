@@ -28,14 +28,14 @@ export interface ZennopayProviderProps {
  * {@link useZennopay} hook. Mirrors `@stripe/stripe-react-native`'s provider.
  *
  * ```tsx
- * <ZennopayProvider config={{ environment: 'staging' }}>
+ * <ZennopayProvider config={{ environment: 'sandbox' }}>
  *   {children}
  * </ZennopayProvider>
  * ```
  */
 export function ZennopayProvider(props: ZennopayProviderProps): JSX.Element {
   const value = useMemo<ZennopayContextValue>(
-    () => ({ config: props.config ?? { environment: 'staging' } }),
+    () => ({ config: props.config ?? { environment: 'sandbox' } }),
     [props.config]
   );
   return (

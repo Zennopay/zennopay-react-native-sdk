@@ -49,7 +49,7 @@ function Checkout(): JSX.Element {
 
 export default function App(): JSX.Element {
   return (
-    <ZennopayProvider config={{ environment: 'staging' }}>
+    <ZennopayProvider config={{ environment: 'sandbox' }}>
       <SafeAreaView style={{ flex: 1 }}>
         <Checkout />
       </SafeAreaView>

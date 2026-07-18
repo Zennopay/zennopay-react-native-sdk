@@ -78,7 +78,7 @@ export async function presentSheet(
     const json = await ZennopayModule.present(
       intentId,
       sessionJwt,
-      JSON.stringify(config ?? { environment: 'staging' }),
+      JSON.stringify(config ?? { environment: 'sandbox' }),
       JSON.stringify(appearance ?? { mode: 'automatic' })
     );
     return JSON.parse(json) as PaymentResult;
@@ -128,7 +128,7 @@ export async function presentReceipt(
     await ZennopayModule.presentReceipt(
       intentId,
       receiptToken,
-      JSON.stringify(config ?? { environment: 'staging' }),
+      JSON.stringify(config ?? { environment: 'sandbox' }),
       JSON.stringify(appearance ?? { mode: 'automatic' })
     );
   } finally {

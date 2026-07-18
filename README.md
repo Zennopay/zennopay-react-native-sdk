@@ -30,7 +30,7 @@ npm install @zennopay/react-native
 ```
 
 > **Note:** if npm hasn't propagated the release yet, install from git:
-> `npm install github:Zennopay/zennopay-react-native-sdk#v0.5.0`.
+> `npm install github:Zennopay/zennopay-react-native-sdk#v0.6.0`.
 
 ### Link the native SDKs
 
@@ -74,7 +74,7 @@ import { ZennopayProvider, useZennopay } from '@zennopay/react-native';
 // Root:
 export default function App() {
   return (
-    <ZennopayProvider config={{ environment: 'staging' }}>
+    <ZennopayProvider config={{ environment: 'sandbox' }}>
       <Wallet />
     </ZennopayProvider>
   );
@@ -128,9 +128,23 @@ import { presentSheet } from '@zennopay/react-native';
 const result = await presentSheet({
   intentId,
   sessionJwt,
-  config: { environment: 'staging' },
+  config: { environment: 'sandbox' },
 });
 ```
+
+### Environments
+
+`config.environment` selects the REST base URL + sandbox chrome:
+
+```ts
+{ environment: 'sandbox' }    // https://api.sandbox.zennopay.in — SANDBOX chrome (default)
+{ environment: 'production' } // https://api.zennopay.in — real money, no sandbox chrome
+{ apiBaseUrl: 'http://10.0.2.2:3000' } // explicit override for local/custom backends
+```
+
+> `'staging'` is **deprecated** — it is a compatibility alias for `'sandbox'`
+> (same host, `https://api.sandbox.zennopay.in`). Existing code keeps working;
+> migrate to `'sandbox'`.
 
 ### Reopening a receipt
 

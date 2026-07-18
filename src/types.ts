@@ -6,10 +6,21 @@
  * confirm/status) is rendered natively — nothing here re-implements it in JS.
  */
 
-export type ZennopayEnvironment = 'staging' | 'production';
+/**
+ * The partner-facing environments.
+ *
+ * - `'sandbox'` → `https://api.sandbox.zennopay.in` (integration/testing).
+ * - `'production'` → `https://api.zennopay.in` (live, money-moving traffic).
+ * - `'staging'` is a **deprecated** alias for `'sandbox'` (same host); use
+ *   `'sandbox'` in new code.
+ */
+export type ZennopayEnvironment = 'sandbox' | 'production' | 'staging';
 
 export interface ZennopayConfig {
-  /** Selects the REST base URL + sandbox chrome. Defaults to `staging`. */
+  /**
+   * Selects the REST base URL + sandbox chrome. Defaults to `sandbox`.
+   * `'staging'` is a deprecated alias for `'sandbox'`.
+   */
   environment?: ZennopayEnvironment;
   /** Explicit REST base URL override (e.g. a local/custom backend). */
   apiBaseUrl?: string;

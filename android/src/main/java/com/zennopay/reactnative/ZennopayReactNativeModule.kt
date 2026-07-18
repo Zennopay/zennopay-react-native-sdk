@@ -156,9 +156,12 @@ class ZennopayReactNativeModule(
 
   // ---- codec: JS dicts <-> native config / appearance / result --------------
 
-  /** `{ environment?: 'staging'|'production', apiBaseUrl?: string }`. */
+  /**
+   * `{ environment?: 'sandbox'|'production', apiBaseUrl?: string }`.
+   * `'staging'` is accepted as a deprecated alias for `'sandbox'`.
+   */
   private fun parseConfig(json: String): ZennopayConfig {
-    val o = runCatching { JSONObject(json) }.getOrNull() ?: return ZennopayConfig.STAGING
+    val o = runCatching { JSONObject(json) }.getOrNull() ?: return sandboxConfig()
     val base = o.optString("apiBaseUrl").takeIf { it.isNotBlank() }
     if (base != null) {
       return ZennopayConfig(
@@ -168,9 +171,20 @@ class ZennopayReactNativeModule(
     }
     return when (o.optString("environment")) {
       "production" -> ZennopayConfig.PRODUCTION
-      else -> ZennopayConfig.STAGING
+      else -> sandboxConfig()
     }
   }
+
+  /**
+   * Sandbox preset with the partner-facing host. Constructed explicitly (rather
+   * than a native `SANDBOX` companion) so the bridge builds against the pinned
+   * native SDK version regardless of which release introduced that companion;
+   * the sheet still shows the sandbox chrome (non-production environment).
+   */
+  private fun sandboxConfig(): ZennopayConfig = ZennopayConfig(
+    apiBaseUrl = "https://api.sandbox.zennopay.in",
+    environment = ZennopayConfig.Environment.STAGING,
+  )
 
   private fun parseAppearance(json: String): ZennopayAppearance {
     val o = runCatching { JSONObject(json) }.getOrNull() ?: return ZennopayAppearance.Automatic

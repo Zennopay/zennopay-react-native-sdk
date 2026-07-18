@@ -181,7 +181,8 @@ enum ZennopayBridgeCodec {
 
   // MARK: Config
 
-  /// `{ environment?: 'staging'|'production', apiBaseUrl?: string }`.
+  /// `{ environment?: 'sandbox'|'production', apiBaseUrl?: string }`.
+  /// `'staging'` is accepted as a deprecated alias for `'sandbox'`.
   static func config(from json: String) -> ZennopayConfig {
     let dict = object(from: json)
     if let base = dict["apiBaseUrl"] as? String,
@@ -189,11 +190,12 @@ enum ZennopayBridgeCodec {
        let url = URL(string: base) {
       return ZennopayConfig(apiBaseURL: url)
     }
-    if let env = dict["environment"] as? String, env == "production",
-       let url = URL(string: "https://api.zennopay.com") {
-      return ZennopayConfig(apiBaseURL: url)
+    // Partner-facing env presets. Host is derived here as a fallback; the JS
+    // config normally supplies `apiBaseUrl`.
+    if let env = dict["environment"] as? String, env == "production" {
+      return ZennopayConfig(apiBaseURL: URL(string: "https://api.zennopay.in")!)
     }
-    return .staging
+    return ZennopayConfig(apiBaseURL: URL(string: "https://api.sandbox.zennopay.in")!)
   }
 
   // MARK: Appearance
