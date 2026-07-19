@@ -14,6 +14,11 @@ import type {
 } from './types';
 
 export * from './types';
+export {
+  ZENNOPAY_HOSTS,
+  DEFAULT_ENVIRONMENT,
+  resolveApiBaseUrl,
+} from './env';
 export { ZennopayProvider, useZennopay } from './ZennopayProvider';
 
 const LINKING_ERROR =
