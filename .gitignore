@@ -15,6 +15,3 @@ Pods/
 
 # macOS
 .DS_Store
-
-# Lockfile excluded (library package)
-package-lock.json

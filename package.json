@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "jest",
     "prepare": "tsc --noEmit"
   },
   "keywords": [
@@ -42,9 +43,12 @@
     "react-native": ">=0.70.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/react": "^18.2.0",
+    "jest": "^29.7.0",
     "react": "18.2.0",
     "react-native": "0.74.0",
+    "ts-jest": "^29.1.5",
     "typescript": "^5.4.0"
   },
   "codegenConfig": {
