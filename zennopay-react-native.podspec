@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
 
   # The native Zennopay iOS SDK that renders the sheet + receipt and provides
   # `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
-  s.dependency "Zennopay", "~> 0.6.0"
+  s.dependency "Zennopay", "~> 0.7.0"
 
   # React Native / TurboModule interop — install_modules_dependencies wires up
   # both the legacy bridge and the new architecture (Fabric/TurboModules).

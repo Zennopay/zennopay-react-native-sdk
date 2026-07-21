@@ -46,7 +46,7 @@ dependencies {
 
   // The native Zennopay Android SDK that renders the PaymentSheet + receipt and
   // exposes `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
-  implementation "in.zennopay:sdk:0.5.0"
+  implementation "in.zennopay:sdk:0.7.0"
 
   // The SDK declares these as `implementation` (runtime-scoped in its POM), but
   // the bridge references them at COMPILE time — `ComponentActivity` (the

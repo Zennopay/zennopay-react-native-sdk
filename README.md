@@ -30,7 +30,7 @@ npm install @zennopay/react-native
 ```
 
 > **Note:** if npm hasn't propagated the release yet, install from git:
-> `npm install github:Zennopay/zennopay-react-native-sdk#v0.6.0`.
+> `npm install github:Zennopay/zennopay-react-native-sdk#v0.7.0`.
 
 ### Link the native SDKs
 
