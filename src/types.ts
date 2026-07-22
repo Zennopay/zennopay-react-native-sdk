@@ -139,12 +139,14 @@ export type PaymentResult =
 export interface PresentSheetOptions {
   /** The Zennopay payment intent id your backend pre-created (e.g. `zp_...`). */
   intentId: string;
-  /** The partner-minted, intent-bound RS256 session JWT (<= 5 min). */
+  /** The Zennopay-minted, intent-bound RS256 session token (<= 5 min),
+   *  returned to your backend from `POST /v1/payment_intents`. */
   sessionJwt: string;
   /**
-   * Host hook invoked on 401/expiry. Re-mints a fresh session JWT for the SAME
-   * intent, or resolves `null` if it can't (then the SDK surfaces an auth
-   * error). Serviced over a native event + reply so the bridge never blocks.
+   * Host hook invoked on 401/expiry. Asks your backend for a fresh session
+   * token for the SAME intent (it re-calls Zennopay's session endpoint), or
+   * resolves `null` if it can't (then the SDK surfaces an auth error).
+   * Serviced over a native event + reply so the bridge never blocks.
    */
   refreshSession?: (intentId: string) => Promise<string | null>;
   appearance?: ZennopayAppearance;
