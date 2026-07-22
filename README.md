@@ -20,8 +20,12 @@ Full documentation: [Zennopay/zennopay-docs](https://github.com/Zennopay/zennopa
   `minSdkVersion` 24+
 - The native Zennopay iOS/Android SDKs, pulled in automatically by
   `pod install` / Gradle (see below) — this package is the JS surface over them
-- A backend session endpoint that creates the payment intent and mints the
-  short-lived session JWT (your API keys never ship in the app)
+- A backend session endpoint that creates the payment intent by calling
+  Zennopay's `POST /v1/payment_intents` (HMAC-signed, server-to-server) and
+  relays the returned Zennopay-minted `session_token` to the sheet — no JWT
+  keypair to generate or register (your API keys never ship in the app). See
+  the [partner-starter](https://github.com/Zennopay/zennopay-partner-starter)
+  (v0.2.0+) for a reference backend.
 
 ## Installation
 
@@ -85,7 +89,9 @@ function PayButton() {
   const { presentSheet } = useZennopay();
 
   const onScanAndPay = async () => {
-    // 1. Ask YOUR backend for a checkout session (intent + session JWT).
+    // 1. Ask YOUR backend for a checkout session. It calls Zennopay's
+    //    POST /v1/payment_intents (HMAC) and returns the intent id + the
+    //    Zennopay-minted session_token.
     const session = await walletApi.createCheckoutSession();
 
     // 2. Present the native PaymentSheet and await the terminal result.
@@ -93,8 +99,9 @@ function PayButton() {
       intentId: session.intentId,
       sessionJwt: session.sessionJwt,
       refreshSession: async (intentId) => {
-        // Called on session expiry (401): re-mint for the SAME intent,
-        // or return null if you can't.
+        // Called on session expiry (401): ask your backend for a fresh
+        // session_token for the SAME intent (it re-calls Zennopay's session
+        // endpoint), or return null if you can't.
         const refreshed = await walletApi.refreshSession(intentId);
         return refreshed?.sessionJwt ?? null;
       },
